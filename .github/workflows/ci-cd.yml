@@ -1,0 +1,101 @@
+name: CI-CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test and validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore API project
+        run: dotnet restore UrlShortener.API/UrlShortener.API.csproj
+
+      - name: Run unit tests
+        run: dotnet test UrlShortener.UnitTests/UrlShortener.UnitTests.csproj --configuration Release --no-restore
+
+      - name: Run integration tests
+        run: dotnet test UrlShortener.IntegrationTests/UrlShortener.IntegrationTests.csproj --configuration Release --no-restore
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: urlshortener-web/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: urlshortener-web
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: urlshortener-web
+        run: npm run build
+
+  docker:
+    name: Build and push Docker images
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./UrlShortener.API/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/urlshortener-api:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/urlshortener-api:sha-${{ github.sha }}
+
+      - name: Build and push Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./urlshortener-web
+          file: ./urlshortener-web/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/urlshortener-web:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/urlshortener-web:sha-${{ github.sha }}
+
+  deploy:
+    name: Trigger Render deploy hooks
+    runs-on: ubuntu-latest
+    needs: docker
+    if: ${{ secrets.RENDER_API_DEPLOY_HOOK != '' || secrets.RENDER_WEB_DEPLOY_HOOK != '' }}
+
+    steps:
+      - name: Trigger API deploy
+        if: ${{ secrets.RENDER_API_DEPLOY_HOOK != '' }}
+        run: curl -X POST "${{ secrets.RENDER_API_DEPLOY_HOOK }}"
+
+      - name: Trigger Web deploy
+        if: ${{ secrets.RENDER_WEB_DEPLOY_HOOK != '' }}
+        run: curl -X POST "${{ secrets.RENDER_WEB_DEPLOY_HOOK }}"

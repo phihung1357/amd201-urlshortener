@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".dockerignore" />
+    <File Path=".github/workflows/ci-cd.yml" />
+    <File Path=".gitignore" />
+    <File Path="urlshortener-web/.dockerignore" />
+    <File Path="urlshortener-web/Dockerfile" />
+    <File Path="urlshortener-web/src/services/urlService.js" />
+  </Folder>
+  <Project Path="UrlShortener.API/UrlShortener.API.csproj" />
+  <Project Path="UrlShortener.Common/UrlShortener.Common.csproj" />
+  <Project Path="UrlShortener.Data/UrlShortener.Data.csproj" />
+  <Project Path="UrlShortener.IntegrationTests/UrlShortener.IntegrationTests.csproj" Id="3dd26d55-13e5-423f-bd47-08184d975020" />
+  <Project Path="UrlShortener.Services/UrlShortener.Services.csproj" />
+  <Project Path="UrlShortener.UnitTests/UrlShortener.UnitTests.csproj" />
+</Solution>
