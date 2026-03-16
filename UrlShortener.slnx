@@ -4,6 +4,7 @@
     <File Path=".github/workflows/ci-cd.yml" />
     <File Path=".gitignore" />
     <File Path="urlshortener-web/.dockerignore" />
+    <File Path="urlshortener-web/.env.production" />
     <File Path="urlshortener-web/Dockerfile" />
     <File Path="urlshortener-web/src/services/urlService.js" />
   </Folder>

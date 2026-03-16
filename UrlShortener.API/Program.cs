@@ -9,10 +9,14 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-if (builder.Environment.IsEnvironment("Testing"))
+var useInMemoryDatabase =
+    builder.Environment.IsEnvironment("Testing") ||
+    builder.Configuration.GetValue<bool>("USE_INMEMORY_DATABASE");
+
+if (useInMemoryDatabase)
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseInMemoryDatabase("IntegrationTestsDb"));
+        options.UseInMemoryDatabase("UrlShortenerDb"));
 }
 else
 {
@@ -54,7 +58,7 @@ if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"
     app.UseHttpsRedirection();
 }
 
-if (!app.Environment.IsEnvironment("Testing"))
+if (!useInMemoryDatabase && !app.Environment.IsEnvironment("Testing"))
 {
     using var scope = app.Services.CreateScope();
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
