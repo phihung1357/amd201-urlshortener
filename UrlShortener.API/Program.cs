@@ -22,11 +22,20 @@ else
 
 builder.Services.AddScoped<IShortUrlService, ShortUrlService>();
 
+var allowedOrigins = builder.Configuration["CORS_ALLOWED_ORIGINS"]?
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    ?? new[]
+    {
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:5174"
+    };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp", policy =>
     {
-        policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:5174")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
